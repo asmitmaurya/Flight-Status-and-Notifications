@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Status Updates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h2>Flight Status Updates</h2>
+    <ul id="flight-list">
+        <!-- Flight items will be dynamically added here -->
+    </ul>
+
+    <!-- Replace with your preferred method to include React.js -->
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+        class FlightList extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = {
+                    flights: []
+                };
+            }
+
+            componentDidMount() {
+                this.fetchFlights();
+            }
+
+            fetchFlights = async () => {
+                try {
+                    const response = await fetch('/api/flights');
+                    const data = await response.json();
+                    this.setState({ flights: data.flights });
+                } catch (error) {
+                    console.error('Error fetching flights:', error);
+                }
+            };
+
+            handleStatusUpdate = async (flightNumber) => {
+                try {
+                    await fetch(`/api/update_status/${flightNumber}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: 'Delayed' })
+                    });
+                    // After updating status, fetch updated flights
+                    this.fetchFlights();
+                } catch (error) {
+                    console.error('Error updating flight status:', error);
+                }
+            };
+
+            render() {
+                const { flights } = this.state;
+                return (
+                    <ul>
+                        {flights.map(flight => (
+                            <li key={flight.flight_number}>
+                                <strong>Flight Number:</strong> {flight.flight_number} <br />
+                                <strong>Status:</strong> {flight.status} <br />
+                                <strong>Gate:</strong> {flight.gate} <br />
+                                <button onClick={() => this.handleStatusUpdate(flight.flight_number)}>
+                                    Delay Flight
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                );
+            }
+        }
+
+        // Render FlightList component into the DOM
+        ReactDOM.render(<FlightList />, document.getElementById('flight-list'));
+    </script>
+</body>
+</html>
